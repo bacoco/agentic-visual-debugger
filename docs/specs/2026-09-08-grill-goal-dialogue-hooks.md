@@ -1,156 +1,169 @@
-# GrillGoal et contrôle des ambiguïtés par hooks
+# GrillGoal and ambiguity checks through hooks
 
-Statut : proposition de conception, 8 septembre 2026. Le skill autonome est ajouté par cette branche ; les nouveaux hooks ne sont ni implémentés ni activés. Ce document conserve l'analyse pour les mainteneurs et n'est pas une dépendance de `grill-goal/SKILL.md`.
+Status: design proposal, September 8, 2026. This branch adds the standalone skill; the additional hooks are neither implemented nor enabled. This document preserves the analysis for maintainers and is not a dependency of `grill-goal/SKILL.md`.
 
-## Problème et résultat attendu
+## Problem and expected outcome
 
-Une IA peut interpréter une demande de façon inexacte, l'exprimer avec assurance, puis réutiliser sa propre formulation comme un fait ou un accord humain. Une synthèse peut aussi perdre des contraintes pourtant discutées. Le résultat paraît cohérent tout en s'éloignant du besoin.
+An AI can misinterpret a request, express that interpretation confidently, then reuse its own wording as a fact or human agreement. A synthesis can also lose constraints that were discussed. The result appears consistent while drifting away from the need.
 
-La proposition est de préserver le sens entre demande humaine, dialogue, goal, actions, preuves et réponses. Les hooks rendent les contrôles accessibles aux moments utiles ; ils ne constituent pas une garantie générale d'absence d'hallucination.
+The proposal is to preserve meaning across the human request, dialogue, goal, actions, evidence, and responses. Hooks make checks available at useful points; they do not provide a general guarantee against hallucinations.
 
-Le skill conserve son contrat : entretien jusqu'à résolution des doutes déterminants, synthèse confirmée, puis fichier goal Markdown autonome destiné à une autre IA. Il s'arrête après livraison. Toutes ses instructions restent dans son seul `SKILL.md`, sans script, référence obligatoire, appel à Claude Code ou dépendance aux fichiers globaux de l'utilisateur.
+The skill keeps its contract: interview until material doubts are resolved, obtain confirmation of a synthesis, then deliver a standalone Markdown goal for another AI. It stops after delivery. All behavioral instructions remain in its single `SKILL.md`, without scripts, required references, calls to Claude Code, or dependencies on the user's global files. The skill and generated goals are written in English; the dialogue, confirmation synthesis, and delivery explanation adapt to the user's language when needed. Translation must preserve the confirmed requirements.
 
-## Principes à préserver
+## Principles to preserve
 
-- Conserver la demande humaine originale. Une reformulation est une interprétation dérivée, jamais une nouvelle instruction humaine.
-- Distinguer faits vérifiés, décisions humaines, propositions et hypothèses. Répéter une phrase ne change pas son statut.
-- Clarifier ce qui peut changer le but, le périmètre, les contraintes ou l'acceptation. Ne pas fabriquer une réponse ni prendre le silence pour accord.
-- Relier les questions à des décisions concrètes ; réutiliser les réponses toujours applicables et résoudre les prérequis avant les questions dépendantes.
-- Confirmer la synthèse avant le goal final. Cette confirmation n'accorde aucune autorisation d'exécution supplémentaire.
-- Transmettre explicitement la règle de précision et de provenance dans chaque goal, pour une IA sans la conversation.
-- Préserver les preuves brutes ; une reformulation de résultat ne doit pas effacer un échec ou une incertitude.
-- Corriger aussi le contexte et les notes affectés lorsqu'une formulation antérieure est invalidée.
+- Preserve the original human request. A reformulation is a derived interpretation, never a new human instruction.
+- Distinguish verified facts, human decisions, proposals, and hypotheses. Repeating a sentence does not change its status.
+- Clarify what could change the purpose, scope, constraints, or acceptance. Do not fabricate an answer or treat silence as agreement.
+- Connect questions to concrete decisions; reuse answers that still apply and resolve prerequisites before dependent questions.
+- Confirm the synthesis before the final goal. This confirmation grants no additional execution permissions.
+- Explicitly transmit the rule on precision and provenance in every goal, for an AI without the conversation.
+- Preserve raw evidence; rewording a result must not erase a failure or uncertainty.
+- Also correct affected context and notes when earlier wording is invalidated.
 
-## Comparaison des approches existantes
+## Comparison with existing approaches
 
-L'analyse est ciblée, non exhaustive ; elle ne démontre ni unicité ni supériorité mesurée.
+The analysis is targeted, not exhaustive; it demonstrates neither uniqueness nor measured superiority.
 
-| Approche | Recoupement et différence utiles |
+| Approach | Relevant overlap and difference |
 | --- | --- |
-| [Matt Pocock, grilling et to-spec](https://github.com/mattpocock/skills) | Entretien par arbre de décisions et synthèse vers une spécification. Le `grilling` consulté travaille par lots de questions dont les prérequis sont réglés. |
-| [Goalcraft](https://github.com/grp06/goalcraft) | Contrat de résultat, vérification, contraintes, limites, itération et blocage. La branche principale active le goal par défaut et utilise des ressources annexes. |
-| [Goal Forge](https://github.com/michaelpersonal/goal-forge) | Entretien, critères acceptés, puis SPEC.md vers GOAL.md ; vérification, mémoire des essais et contrôle des ressources. |
-| [Spec Kit clarify](https://github.com/github/spec-kit/blob/main/templates/commands/clarify.md) | Clarification structurée avec conservation des réponses ; plafond explicite de cinq questions par session. |
-| [Superpowers brainstorming](https://github.com/obra/superpowers/blob/main/skills/brainstorming/SKILL.md) | Dialogue et conception approuvée, avec processus adapté à l'ampleur, puis planification pour les travaux architecturaux. |
-| [OpenSpec](https://github.com/Fission-AI/OpenSpec) | Exploration de l'intention puis artefacts de changement et workflow d'exécution. |
-| [goal-crafter](https://github.com/tt-a1i/matt-skills-with-to-goal/blob/main/skills/engineering/goal-crafter/SKILL.md) et [goalcraft-skill](https://github.com/xiaoyangtx996/goalcraft-skill) | Autres variantes entretien/compilation vers un goal vérifiable ; elles interdisent également certaines suppositions ou distinguent compilation et exécution. |
+| [Matt Pocock, grilling and to-spec](https://github.com/mattpocock/skills) | Decision-tree interview and synthesis into a specification. The reviewed `grilling` uses batches of questions whose prerequisites are settled. |
+| [Goalcraft](https://github.com/grp06/goalcraft) | Outcome contract, verification, constraints, limits, iteration, and blocking conditions. The main branch activates the goal by default and uses supporting resources. |
+| [Goal Forge](https://github.com/michaelpersonal/goal-forge) | Interview, accepted criteria, then SPEC.md to GOAL.md; verification, memory of attempts, and resource controls. |
+| [Spec Kit clarify](https://github.com/github/spec-kit/blob/main/templates/commands/clarify.md) | Structured clarification with retained answers; an explicit cap of five questions per session. |
+| [Superpowers brainstorming](https://github.com/obra/superpowers/blob/main/skills/brainstorming/SKILL.md) | Dialogue and approved design, with a process adapted to scope, followed by planning for architectural work. |
+| [OpenSpec](https://github.com/Fission-AI/OpenSpec) | Intent exploration followed by change artifacts and an execution workflow. |
+| [goal-crafter](https://github.com/tt-a1i/matt-skills-with-to-goal/blob/main/skills/engineering/goal-crafter/SKILL.md) and [goalcraft-skill](https://github.com/xiaoyangtx996/goalcraft-skill) | Other interview/compilation variants producing a verifiable goal; they also prohibit certain assumptions or distinguish compilation from execution. |
 
-La combinaison recherchée par GrillGoal est : un fichier de skill autonome, un dialogue sans quota arbitraire, une synthèse confirmée, des précédents historiques pertinents avec contrôles associés et une règle de provenance transmise au prochain agent. La mémoire des échecs et les critères vérifiables existent déjà ailleurs.
+GrillGoal seeks to combine a standalone skill file, dialogue without an arbitrary quota, a confirmed synthesis, relevant historical precedents with associated checks, and a provenance rule passed to the next agent. Failure memory and verifiable criteria already exist elsewhere.
 
-## Leçons des issues et pull requests
+## Lessons from issues and pull requests
 
-Les signalements ci-dessous sont des preuves documentaires, pas des reproductions locales réalisées pour cette proposition.
+The reports below are documentary evidence, not local reproductions performed for this proposal.
 
-| Source | Constat et statut | Leçon |
+| Source | Finding and status | Lesson |
 | --- | --- | --- |
-| [Matt Pocock #689](https://github.com/mattpocock/skills/issues/689) | Signalement ouvert : décisions et arbitrages perdus lors du passage à la spec. | Vérifier la conservation du contenu, pas seulement la présence de rubriques. |
-| [Matt Pocock #802](https://github.com/mattpocock/skills/issues/802) | Signalement et commentaire d'usage : retour d'un subagent traité comme réponse humaine ; questions modifiées au fil des résultats. | Un résultat de recherche ne résout pas un arbitrage humain. Toute reformulation d'une question pendante doit être explicite. |
-| [Matt Pocock #893](https://github.com/mattpocock/skills/issues/893) | Signalement : toutes les décisions peuvent être réglées sans que le fonctionnement soit expliqué. | Commencer la synthèse par un court paragraphe concret compréhensible par un nouveau lecteur. |
-| [Superpowers #2076](https://github.com/obra/superpowers/issues/2076) | Session rapportée : lourde procédure pour une copie de fichiers ; commentaire de clôture annonçant un processus allégé en 6.3.0. | Ne pas déclencher un entretien ou créer des documents pour toute opération. |
-| [OpenSpec #1103](https://github.com/Fission-AI/OpenSpec/issues/1103) | Outils spécifiques à Claude nommés dans les sorties Codex ; correctifs et vérifications décrits par un collaborateur. | Vérifier les capacités du moteur ; conserver un comportement générique sans outil propriétaire obligatoire. |
-| [Spec Kit #896](https://github.com/github/spec-kit/issues/896) | Signalement de mélange entre rédaction de gouvernance et implémentation ; correctif associé à #3646. | La rédaction d'un goal ne lance pas le travail qu'il décrit. |
+| [Matt Pocock #689](https://github.com/mattpocock/skills/issues/689) | Open report: decisions and trade-offs lost when moving to the spec. | Verify preservation of content, not just the presence of headings. |
+| [Matt Pocock #802](https://github.com/mattpocock/skills/issues/802) | Report and usage comment: subagent output treated as a human answer; questions changed as results arrived. | A research result does not resolve a human trade-off. Any reformulation of a pending question must be explicit. |
+| [Matt Pocock #893](https://github.com/mattpocock/skills/issues/893) | Report: all decisions can be settled without explaining how the result works. | Start the synthesis with a short, concrete paragraph a new reader can understand. |
+| [Superpowers #2076](https://github.com/obra/superpowers/issues/2076) | Reported session: an elaborate process for copying files; closing comment announces a lighter process in 6.3.0. | Do not trigger an interview or create documents for every operation. |
+| [OpenSpec #1103](https://github.com/Fission-AI/OpenSpec/issues/1103) | Claude-specific tools named in Codex output; fixes and checks described by a collaborator. | Verify engine capabilities; preserve generic behavior without a mandatory proprietary tool. |
+| [Spec Kit #896](https://github.com/github/spec-kit/issues/896) | Report of conflating governance writing with implementation; fix associated with #3646. | Writing a goal does not launch the work it describes. |
 
-### Inventaire complet consulté pour Goalcraft et Goal Forge
+### Complete inventory reviewed for Goalcraft and Goal Forge
 
-Au 8 septembre 2026, l'API GitHub ne renvoie aucune issue, ouverte ou fermée, pour `grp06/goalcraft` et `michaelpersonal/goal-forge`. Cela limite les retours disponibles ; cela ne prouve pas l'absence de défauts.
+As of September 8, 2026, the GitHub API returned no open or closed issues for `grp06/goalcraft` and `michaelpersonal/goal-forge`. This limits available feedback; it does not prove an absence of defects.
 
-- [Goalcraft PR #1](https://github.com/grp06/goalcraft/pull/1), ouverte : adaptation à Pi, changement des règles de commande et séparation entre commande préparée et activation confirmée. La revue automatique signale un objectif vide accepté par le validateur. La lecture du code au SHA `5a0ac325bcb5b3fa3bceaca886d240c0a10fb7ea` confirme l'absence de rejet de longueur nulle après extraction ; le validateur n'a pas été exécuté ici. Ne pas présenter cette branche comme fusionnée.
-- [Goal Forge PR #1](https://github.com/michaelpersonal/goal-forge/pull/1), fusionnée : mesure de progression, contrôle rapide représentatif, preuve finale et mémoire des essais. Le suivi des erreurs pendant l'exécution est donc un précédent, pas une invention de GrillGoal.
-- [Goal Forge PR #2](https://github.com/michaelpersonal/goal-forge/pull/2) et [#3](https://github.com/michaelpersonal/goal-forge/pull/3), fusionnées : illustration du README uniquement ; aucune preuve de qualité d'exécution.
-- [Goal Forge PR #4](https://github.com/michaelpersonal/goal-forge/pull/4), fusionnée : budgets, avertissement, arrêt, prolongation explicite et état incomplet. La validation déclarée est une revue de diff. Les recommandations chiffrées de cette PR ne sont pas des valeurs par défaut à importer dans GrillGoal.
+- [Goalcraft PR #1](https://github.com/grp06/goalcraft/pull/1), open: adaptation to Pi, changed command rules, and separation between a prepared command and confirmed activation. Automated review flags an empty objective accepted by the validator. Reading the code at SHA `5a0ac325bcb5b3fa3bceaca886d240c0a10fb7ea` confirms no rejection of zero length after extraction; the validator was not executed here. Do not describe this branch as merged.
+- [Goal Forge PR #1](https://github.com/michaelpersonal/goal-forge/pull/1), merged: progress measurement, a representative quick check, final evidence, and memory of attempts. Tracking errors during execution is therefore a precedent, not a GrillGoal invention.
+- [Goal Forge PR #2](https://github.com/michaelpersonal/goal-forge/pull/2) and [#3](https://github.com/michaelpersonal/goal-forge/pull/3), merged: README illustration only; no evidence of execution quality.
+- [Goal Forge PR #4](https://github.com/michaelpersonal/goal-forge/pull/4), merged: budgets, warning, stopping, explicit extension, and incomplete status. The declared validation is diff review. Its numeric recommendations are not defaults to import into GrillGoal.
 
-Les descriptions, changements, commentaires et revues de ces cinq PR ont été examinés. Une review automatique reste un signal à confronter au code ; une fusion ne démontre pas un gain utilisateur.
+The descriptions, changes, comments, and reviews of these five PRs were examined. Automated review remains a signal to check against code; a merge does not demonstrate a user benefit.
 
-## Enseignements de la recherche
+## Research findings
 
-- [LLMs Get Lost In Multi-Turn Conversation](https://arxiv.org/html/2505.06120v1) rapporte, dans ses simulations, des réponses prématurées, un attachement aux tentatives précédentes et une perte de contraintes intermédiaires. Cela motive la provenance et le retour aux sources après correction ; ce n'est pas une preuve d'efficacité de notre hook.
-- [Reflexion](https://arxiv.org/html/2303.11366v4) étudie la conservation de retours textuels pour améliorer les tentatives suivantes. La mémoire des erreurs est utile à étudier, mais un souvenir produit par un modèle ne devient pas un fait indépendant.
-- [Prism](https://arxiv.org/html/2601.08653v1) organise la clarification selon les dépendances entre intentions pour réduire la charge cognitive.
-- [Uncertainty-Aware Clarification](https://arxiv.org/html/2606.03135v1) évalue les questions selon leur contribution à la réduction d'incertitude et à l'action correcte.
-- [RegretBench](https://arxiv.org/html/2607.21143v1) distingue qualité finale, tours inutiles et mauvaise décision d'arrêter. Ses simulations ne remplacent pas une évaluation avec de vrais utilisateurs.
+- [LLMs Get Lost In Multi-Turn Conversation](https://arxiv.org/html/2505.06120v1) reports premature answers, attachment to previous attempts, and loss of intermediate constraints in its simulations. This motivates provenance and returning to sources after corrections; it is not evidence that our hook works.
+- [Reflexion](https://arxiv.org/html/2303.11366v4) studies retaining textual feedback to improve later attempts. Failure memory is worth studying, but a model-generated memory does not become an independent fact.
+- [Prism](https://arxiv.org/html/2601.08653v1) organizes clarification around dependencies between intentions to reduce cognitive load.
+- [Uncertainty-Aware Clarification](https://arxiv.org/html/2606.03135v1) evaluates questions by their contribution to reducing uncertainty and choosing the correct action.
+- [RegretBench](https://arxiv.org/html/2607.21143v1) distinguishes final quality, unnecessary turns, and an incorrect decision to stop. Its simulations do not replace evaluation with real users.
 
-Conséquence proposée : conserver les questions nécessaires, sans quota fixe, mais demander ce que chacune changerait. Évaluer aussi les questions inutiles, les contraintes perdues et les fausses confirmations.
+Proposed implication: retain necessary questions without a fixed quota, but ask what each would change. Also evaluate unnecessary questions, lost constraints, and false confirmations.
 
-## Architecture proposée
+## Proposed architecture
 
 ```text
-Message original + décisions applicables
-→ qualification : nouvelle mission / correction / réponse / continuation / question
-→ interprétation courte, dérivée et explicitement non confirmée si nécessaire
-→ dialogue GrillGoal lorsque des décisions déterminantes manquent
-→ synthèse humaine confirmée
-→ goal autonome livré
+Original message + applicable decisions
+→ classify: new mission / correction / answer / continuation / question
+→ brief derived interpretation, explicitly unconfirmed when needed
+→ GrillGoal dialogue when material decisions are missing
+→ synthesis confirmed by the human
+→ standalone goal delivered
 ```
 
-Un message « continue » reprend la mission existante. Une demande d'avis reste une demande d'avis. Une réponse à une question complète l'entretien. Aucun de ces messages ne crée automatiquement un nouveau goal ou fichier.
+A "continue" message resumes the existing mission. A request for an opinion remains a request for an opinion. An answer to a question contributes to the interview. None of these messages automatically creates a new goal or file.
 
-| Événement | Responsabilité proposée |
+| Event | Proposed responsibility |
 | --- | --- |
-| UserPromptSubmit | Qualifier le message et fournir le contexte nécessaire au dialogue, sans remplacer l'original ni promouvoir une hypothèse en instruction. |
-| PreToolUse | Comparer l'action, son périmètre et son autorisation aux décisions établies. Ne pas recommencer l'entretien avant chaque outil. |
-| PostToolUse | Conserver le résultat exact et signaler les limites de ce qu'il prouve. L'action a déjà eu lieu. |
-| Stop | Relire les affirmations de la réponse et demander une correction ciblée en cas d'ambiguïté déterminante ou de dépassement des preuves. |
+| UserPromptSubmit | Classify the message and provide the context needed for dialogue, without replacing the original or promoting a hypothesis into an instruction. |
+| PreToolUse | Compare the action, its scope, and its authorization with established decisions. Do not restart the interview before every tool call. |
+| PostToolUse | Preserve the exact result and flag the limits of what it proves. The action has already happened. |
+| Stop | Review response claims and request a targeted correction for a material ambiguity or a claim exceeding the evidence. |
 
-Ces rôles sont une proposition, pas une affirmation que tous les moteurs fournissent des garanties identiques.
+These roles are a proposal, not a claim that every engine provides identical guarantees.
 
-### Capacités documentées et limites
+### Documented capabilities and limits
 
-La [référence Anthropic](https://code.claude.com/docs/en/hooks) distingue réception du message et appels d'outils. `UserPromptSubmit` ajoute du contexte sans remplacer le prompt. `Stop` peut provoquer une continuation. `MessageDisplay` ne corrige que l'affichage : le transcript et le texte vu par Claude restent inchangés. Ce dernier mécanisme seul ne résout donc pas la réutilisation d'une formulation erronée.
+The [Anthropic reference](https://code.claude.com/docs/en/hooks) distinguishes message submission from tool calls. `UserPromptSubmit` adds context without replacing the prompt. `Stop` can trigger a continuation. `MessageDisplay` only corrects the display: the transcript and text seen by Claude remain unchanged. That mechanism alone therefore does not address reuse of incorrect wording.
 
-La [référence OpenAI](https://learn.chatgpt.com/docs/hooks) décrit ces événements avec ses propres entrées et sorties. Le contexte ajouté par `UserPromptSubmit` est du contexte développeur : il faut y préserver explicitement le statut dérivé des interprétations. Une continuation issue de `Stop` n'est pas une nouvelle approbation humaine. Certains chemins d'outils ne sont pas interceptés ; ne pas promettre une barrière universelle.
+The [OpenAI reference](https://learn.chatgpt.com/docs/hooks) describes these events with its own inputs and outputs. Context added by `UserPromptSubmit` is developer context: the derived status of interpretations must be explicitly preserved. A continuation from `Stop` is not new human approval. Some tool paths are not intercepted; do not promise a universal barrier.
 
-Un hook de fin n'est pas une garantie de correction avant affichage de tous les messages intermédiaires. Si cette propriété devient obligatoire, il faudra une couche applicative qui retient la réponse avant diffusion et maintient le même contenu corrigé côté utilisateur et côté modèle. La latence et le traitement du streaming doivent alors être mesurés.
+An end-of-turn hook does not guarantee correction before every intermediate message is displayed. If that property becomes mandatory, an application layer must buffer the response before delivery and maintain the same corrected content for the user and the model. Latency and streaming behavior must then be measured.
 
-Une analyse sémantique exige un jugement de modèle ou une logique applicative ; un contrôle déterministe seul ne garantit pas la détection de toutes les ambiguïtés. Les [hooks évalués par modèle chez Anthropic](https://code.claude.com/docs/en/hooks-guide) offrent un mécanisme, pas une preuve de justesse du jugement.
+Semantic analysis requires model judgment or application logic; a deterministic check alone does not guarantee detection of every ambiguity. [Anthropic's model-evaluated hooks](https://code.claude.com/docs/en/hooks-guide) provide a mechanism, not proof that the judgment is correct.
 
-### Contrat du contrôleur
+### Controller contract
 
-Le contrôleur rend un constat borné : passage exact, source ou décision concernée, interprétations concurrentes, conséquence possible et correction proposée. Il doit pouvoir dire « inconnu » ou « vérification indisponible ».
+The controller returns a bounded finding: exact passage, relevant source or decision, competing interpretations, possible consequence, and proposed correction. It must be able to say "unknown" or "verification unavailable."
 
-- Si les sources règlent le point, l'agent corrige sa formulation et les notes affectées.
-- Si la correction dépend de l'intention humaine, l'agent pose une question ; le contrôleur ne tranche pas à sa place.
-- Une phrase incertaine devient une incertitude explicite, jamais une certitude artificielle.
-- Un contrôle refusé ne doit pas empêcher l'agent de poser la question nécessaire.
-- Les contenus lus et les retours des contrôleurs restent des données/propositions, sans autorité nouvelle.
-- Prévenir les boucles : lier une correction au tour et au passage concernés, reconnaître les continuations produites par le hook, borner les reprises automatiques et laisser l'utilisateur interrompre. La borne exacte reste à choisir et tester.
-- En cas de panne, ne pas annoncer « vérifié ». Le sort d'une action dépend de la politique d'autorisation déjà applicable, pas d'un avis favorable inventé.
+- If sources settle the point, the agent corrects its wording and affected notes.
+- If the correction depends on human intent, the agent asks a question; the controller does not decide for the human.
+- An uncertain sentence becomes explicit uncertainty, never artificial certainty.
+- A failed check must not prevent the agent from asking the necessary question.
+- Read content and controller feedback remain data or proposals, without new authority.
+- Prevent loops: tie a correction to the relevant turn and passage, recognize hook-generated continuations, bound automatic retries, and allow user interruption. The exact bound remains to be chosen and tested.
+- On failure, do not claim "verified." An action's outcome depends on the existing authorization policy, not an invented favorable assessment.
 
-Exemple fictif : « c'est publié » doit devenir « le commit est poussé sur la branche de travail ; il n'est pas fusionné » si les observations établissent uniquement ce premier état.
+Fictitious example: "it is published" should become "the commit is pushed to the working branch; it is not merged" if observations establish only that first state.
 
-## Améliorations candidates de GrillGoal
+## Candidate GrillGoal improvements and review outcome
 
-1. Rendre le résultat global compréhensible dans le premier paragraphe de synthèse.
-2. Relier chaque question à une décision et réutiliser les réponses toujours valides.
-3. Rechercher, pour un précédent, les correctifs, tests, réouvertures et régressions disponibles ; conserver le dernier état vérifié.
-4. Distinguer confirmation de la synthèse et autorisation d'exécution.
-5. Pour une limite de ressources demandée, définir son périmètre et le comportement à expiration, sans délai inventé ni prolongation tacite.
-6. Distinguer contrôle intermédiaire et preuve finale lorsque des itérations sont nécessaires.
-7. Préserver les tentatives significatives lorsque la mission le nécessite ; un nouvel essai d'une approche échouée doit indiquer l'élément nouveau.
-8. Livrer aussi une instruction en texte ordinaire si l'autre IA ne possède pas `/goal` ; ne pas annoncer une activation.
+1. Make the overall outcome understandable in the synthesis's first paragraph.
+2. Connect each question to a decision and reuse answers that remain valid.
+3. Research available fixes, tests, reopened issues, and regressions for a precedent; preserve the latest verified state.
+4. Distinguish confirmation of the synthesis from execution authorization.
+5. For a requested resource limit, define its scope and what happens at expiration, without an invented deadline or tacit extension.
+6. Distinguish intermediate checks from final evidence when iterations are needed.
+7. Preserve significant attempts when the mission requires it; retrying a failed approach should identify new information.
+8. Also deliver a plain-text instruction if the receiving AI lacks `/goal`; do not claim activation.
 
-Certaines règles sont déjà implicites ou partiellement présentes. Toute modification doit apporter une clarification concrète sans duplication ni catalogue universel imposé aux goals.
+Claude Code reviewed PR #78 at commit `475d84a` from its diff, without running the skill or rechecking external sources. It considered candidates 1–7 sufficiently covered to avoid adding duplicate rules and recommended implementing candidate 8. That is a textual assessment, not behavioral proof. Candidate 8 is now included, along with an explicit default output location: the current project's root, or the current working directory when that root is unknown or no project applies. The review also suggested an English description; the maintainer subsequently required the entire skill and generated goals to be in English, with language adaptation for user-facing dialogue. A subsequent Claude Code comparison of the French and English skill found no material requirement lost in translation; interview behavior remains untested.
 
-## Critères d'acceptation pour une implémentation ultérieure
+Further changes should clarify a concrete problem without duplication or a universal checklist imposed on every goal.
 
-- [ ] Le skill fonctionne isolément depuis son seul SKILL.md.
-- [ ] La couche de hooks est facultative, désactivable et distincte de sg-mission-lock ; elle ne change pas silencieusement son comportement stateless/non-bloquant.
-- [ ] Demande originale, interprétation, décision humaine et preuve restent distinguées.
-- [ ] Les continuations, corrections et simples questions ne deviennent pas de nouvelles missions.
-- [ ] Une décision manquante provoque une question, sans réponse fabriquée.
-- [ ] Un résultat de subagent ou feedback de hook ne vaut jamais accord humain.
-- [ ] Une correction arrive dans le contexte du modèle et les notes affectées, pas seulement à l'écran.
-- [ ] Un résultat brut en échec ne devient pas un succès par reformulation.
-- [ ] Un budget expiré donne un état incomplet lorsque les critères ne sont pas satisfaits.
-- [ ] Les moteurs, versions et chemins réellement couverts sont nommés ; les cas non couverts restent visibles.
-- [ ] Pannes, délais, récursion et interruption utilisateur sont traités sans boucle ni faux statut « vérifié ».
-- [ ] L'évaluation compare les mêmes demandes avec et sans contrôle : fidélité, omissions, faux accords, questions inutiles, corrections utiles, latence et coût.
-- [ ] Une revue humaine des cas ambigus complète les contrôles mécaniques ; aucune auto-note n'est présentée comme preuve de supériorité.
+## Follow-up study: recommendations when the user asks what to do next
 
-## Alternatives et ordre de travail
+The maintainer reported that explicit requests such as "what do you recommend now?" produce useful guidance. This is feedback from this conversation, not comparative evidence that a new skill or hook would improve outcomes.
 
-Le skill seul reste une option complète pour rédiger un goal. Une couche qui réécrit silencieusement tous les prompts ou lance un goal à chaque message est rejetée : elle pourrait créer l'autorité et la dérive qu'elle prétend prévenir. Un filtre d'affichage seul est insuffisant pour corriger le contexte du modèle.
+The behavior to evaluate is a concise recommendation grounded in the current objective, verified progress, remaining uncertainty, and applicable past failures. Name one concrete next action, why it takes priority, and the result or evidence it should produce. Offer alternatives only when a real trade-off would change the choice; recommend stopping when the work is complete and no useful next action is justified.
 
-Ordre proposé : préciser les cas d'usage et la matrice des moteurs ; évaluer un contrôle consultatif à l'entrée et à la fin du tour ; mesurer les erreurs et la latence ; envisager ensuite les contrôles avant/après outil réellement utiles. Démontrer chaque couche depuis son point d'entrée réel avant d'en élargir la portée.
+GrillGoal already requires reasoned recommendations during the interview. ShipGuard's `sg-ship` summary already identifies the most important thing for the human to inspect, while `sg-mission-lock` preserves scope and authorization. A recommendation could explain the next action more clearly at those existing points; it does not yet justify another skill or an automatic hook on every response.
 
-La présente contribution livre un skill et une conception sourcée. Elle ne livre ni hooks actifs, ni comparaison expérimentale complète, ni garantie d'absence d'ambiguïté.
+An advice request remains an advice request. If the user subsequently accepts a proposal, resolve that acceptance against the exact action proposed and existing permissions. Do not interpret agreement to one next step as approval for every later step or for unrelated publication. Do not ask for authorization again when it has already been established.
 
+Evaluate ordinary advice requests, corrections, incomplete evidence, several competing next steps, and completed missions. Judge whether the recommendation helps the human choose, preserves scope, avoids invented work or approvals, and reduces unnecessary follow-up. This is a study proposal; this revision does not change recommendation behavior in GrillGoal, `sg-ship`, or the mission-lock hook.
+
+## Acceptance criteria for a later implementation
+
+- [ ] The skill works in isolation from its single SKILL.md.
+- [ ] The hook layer is optional, can be disabled, and is distinct from sg-mission-lock; it does not silently change its stateless, non-blocking behavior.
+- [ ] The original request, interpretation, human decision, and evidence remain distinct.
+- [ ] Continuations, corrections, and simple questions do not become new missions.
+- [ ] A missing decision prompts a question, without a fabricated answer.
+- [ ] Subagent output or hook feedback never counts as human agreement.
+- [ ] A correction reaches model context and affected notes, not just the display.
+- [ ] A failing raw result does not become a success through rewording.
+- [ ] An expired budget yields an incomplete state when criteria are unmet.
+- [ ] Engines, versions, and paths actually covered are named; uncovered cases remain visible.
+- [ ] Failures, timeouts, recursion, and user interruption are handled without loops or a false "verified" status.
+- [ ] Evaluation compares the same requests with and without checks: fidelity, omissions, false agreements, unnecessary questions, useful corrections, latency, and cost.
+- [ ] Human review of ambiguous cases complements mechanical checks; no self-assigned score is presented as evidence of superiority.
+
+## Alternatives and work order
+
+The skill alone remains a complete option for writing a goal. A layer that silently rewrites every prompt or launches a goal on every message is rejected: it could create the authority and drift it claims to prevent. A display-only filter is insufficient to correct model context.
+
+Proposed order: clarify use cases and the engine capability matrix; evaluate advisory checks at input and end of turn; measure errors and latency; then consider useful checks before and after tools. Demonstrate each layer from its actual entry point before expanding its scope.
+
+This contribution delivers a skill and a sourced design. It does not deliver active hooks, a complete experimental comparison, or a guarantee of unambiguous behavior.
