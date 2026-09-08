@@ -110,6 +110,8 @@ Static **find** (`sg-code-audit`) → dynamic **process check** (`sg-process-che
 
 [`grill-goal`](plugins/shipguard/skills/grill-goal/SKILL.md) helps define the work before execution: interview the user, research relevant past failures, confirm a synthesis, then deliver a standalone Markdown goal for another AI. The skill consists of a single self-contained `SKILL.md`.
 
+The [dialogue-hook design proposal](docs/specs/2026-09-08-grill-goal-dialogue-hooks.md) records the research, failure cases, and acceptance criteria for optional ambiguity checks. These additional hooks are not implemented or enabled.
+
 ### Install
 
 ```bash
