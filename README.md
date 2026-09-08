@@ -108,6 +108,8 @@ Static **find** (`sg-code-audit`) → dynamic **process check** (`sg-process-che
 </tr>
 </table>
 
+[`grill-goal`](plugins/shipguard/skills/grill-goal/SKILL.md) helps define the work before execution: interview the user, research relevant past failures, confirm a synthesis, then deliver a standalone Markdown goal for another AI. The skill consists of a single self-contained `SKILL.md`.
+
 ### Install
 
 ```bash

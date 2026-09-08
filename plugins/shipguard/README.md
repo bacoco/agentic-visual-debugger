@@ -14,10 +14,11 @@ Five AI-powered modules. Use one, some, or all. No test files to write.
 
 One orchestrator ties them together: `/sg-ship` runs audit → process check → visual → review on your diff.
 
-### All 14 skills
+### All 15 skills
 
 | Skill | Purpose |
 |-------|---------|
+| [`/grill-goal`](skills/grill-goal/SKILL.md) | Clarify the user's intent through dialogue, confirm a synthesis, then write a standalone Markdown goal for another AI; does not execute the goal |
 | `/sg-mission-lock` | Lock the literal mission and authority before work; model-aware Codex activation for GPT-5.6 Sol |
 | `/sg-gauntlet` | Turn a quality goal into one paste-ready prompt that grinds builders against blind critics until the work beats a named, fetchable bar |
 | `/sg-ship` | One-command pipeline: code audit → process check → visual run → unified review, scoped to your diff |
